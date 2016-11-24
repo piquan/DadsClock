@@ -49,58 +49,58 @@ void burnTestInnerLoop();
 void eightsInnerLoop();
 #define MAX_LOOPNUM 2
 void (*innerLoops[MAX_LOOPNUM+1])(void) =
-	{normalInnerLoop, burnTestInnerLoop, eightsInnerLoop};
+        {normalInnerLoop, burnTestInnerLoop, eightsInnerLoop};
 void (*innerLoop)() = normalInnerLoop;
 
 void
 setup()
 {
-	debug = EEPROM.read(DEBUG_ADDR);
-	pinMode(LED_BUILTIN, OUTPUT);
-	if (debug) {
-		digitalWrite(LED_BUILTIN, HIGH);
-	}
-	Serial.begin(9600);
-	
-	unsigned int innerLoopNum = EEPROM.read(LOOP_ADDR);
-	if (innerLoopNum > MAX_LOOPNUM) {
-		innerLoopNum = 0;
-	}
-	innerLoop = innerLoops[innerLoopNum];
+        debug = EEPROM.read(DEBUG_ADDR);
+        pinMode(LED_BUILTIN, OUTPUT);
+        if (debug) {
+                digitalWrite(LED_BUILTIN, HIGH);
+        }
+        Serial.begin(9600);
+        
+        unsigned int innerLoopNum = EEPROM.read(LOOP_ADDR);
+        if (innerLoopNum > MAX_LOOPNUM) {
+                innerLoopNum = 0;
+        }
+        innerLoop = innerLoops[innerLoopNum];
 
-	pinMode(DST_PIN, INPUT_PULLUP);
+        pinMode(DST_PIN, INPUT_PULLUP);
 
-	// Set to displaying nothing, lowest intensity, then turn on the display.
-	lcl.clearDisplay(0);
-	lcl.setIntensity(0, 0);
-	lcl.shutdown(0, false);
+        // Set to displaying nothing, lowest intensity, then turn on the display.
+        lcl.clearDisplay(0);
+        lcl.setIntensity(0, 0);
+        lcl.shutdown(0, false);
 
-	if (debug) {
-		Wire.beginTransmission(DS1307_CTRL_ID);
-		Wire.write((uint8_t)0x00); // reset register pointer
-		Wire.endTransmission();
-		unsigned char bytes[0x40];
-		int i;
-		Wire.requestFrom(DS1307_CTRL_ID, 0x40);
-		for (i = 0; i < 0x40; i++) {
-			bytes[i] = Wire.read();
-		}
-		Serial.println(F("RTC:"));
-		for (i = 0; i < 0x40; i++) {
-			Serial.print(bytes[i], 16);
-			Serial.write(' ');
-		}
-		Serial.println("");
+        if (debug) {
+                Wire.beginTransmission(DS1307_CTRL_ID);
+                Wire.write((uint8_t)0x00); // reset register pointer
+                Wire.endTransmission();
+                unsigned char bytes[0x40];
+                int i;
+                Wire.requestFrom(DS1307_CTRL_ID, 0x40);
+                for (i = 0; i < 0x40; i++) {
+                        bytes[i] = Wire.read();
+                }
+                Serial.println(F("RTC:"));
+                for (i = 0; i < 0x40; i++) {
+                        Serial.print(bytes[i], 16);
+                        Serial.write(' ');
+                }
+                Serial.println("");
 
-		Serial.println(F("go"));
-		digitalWrite(LED_BUILTIN, LOW);
-	}
+                Serial.println(F("go"));
+                digitalWrite(LED_BUILTIN, LOW);
+        }
 }
 
 bool
 inDST()
 {
-	return digitalRead(DST_PIN) == LOW;
+        return digitalRead(DST_PIN) == LOW;
 }
 
 // See BSD's date(1) for the format this uses.  It's pretty much
@@ -111,78 +111,78 @@ inDST()
 void
 read_and_set_time(const String &str)
 {
-	tmElements_t tm;
+        tmElements_t tm;
 
-	RTC.read(tm);
-	int start = 0;
-	int dotpos = str.indexOf('.');
-	int datelen = dotpos != -1 ? dotpos : str.length();
+        RTC.read(tm);
+        int start = 0;
+        int dotpos = str.indexOf('.');
+        int datelen = dotpos != -1 ? dotpos : str.length();
 
-	if (dotpos == -1) {
-		tm.Second = 0;
-	} else {
-		tm.Second = str.substring(dotpos + 1).toInt();
-	}
+        if (dotpos == -1) {
+                tm.Second = 0;
+        } else {
+                tm.Second = str.substring(dotpos + 1).toInt();
+        }
 
 #define GETDD(dd) \
-			do { \
-				dd = str.substring(start, start+2).toInt(); \
-				start += 2; \
-				datelen -= 2; \
-			} while (0)
-	int calYear = tmYearToCalendar(tm.Year);
-	if (datelen >= 12) {
-		int cc;
-		GETDD(cc);
-		calYear = cc * 100;
-	}
-	if (datelen >= 10) {
-		int yy;
-		GETDD(yy);
-		calYear = (calYear / 100) * 100 + yy;
-	}
-	tm.Year = CalendarYrToTm(calYear);
-	if (datelen >= 8) GETDD(tm.Month);
-	if (datelen >= 6) GETDD(tm.Day);
-	if (datelen >= 4) {
-		GETDD(tm.Hour);
-		// If we're in DST, then the input value was an hour ahead of
-		// standard time.  Compensate.
-		if (inDST()) {
-			if (tm.Hour == 0) {
-				tm.Hour = 23;
-				tm.Day--; // Not guaranteed to work; don't care right now
-			} else {
-				tm.Hour--;
-			}
-		}
-	}
-	if (datelen >= 2) GETDD(tm.Minute);
+                        do { \
+                                dd = str.substring(start, start+2).toInt(); \
+                                start += 2; \
+                                datelen -= 2; \
+                        } while (0)
+        int calYear = tmYearToCalendar(tm.Year);
+        if (datelen >= 12) {
+                int cc;
+                GETDD(cc);
+                calYear = cc * 100;
+        }
+        if (datelen >= 10) {
+                int yy;
+                GETDD(yy);
+                calYear = (calYear / 100) * 100 + yy;
+        }
+        tm.Year = CalendarYrToTm(calYear);
+        if (datelen >= 8) GETDD(tm.Month);
+        if (datelen >= 6) GETDD(tm.Day);
+        if (datelen >= 4) {
+                GETDD(tm.Hour);
+                // If we're in DST, then the input value was an hour ahead of
+                // standard time.  Compensate.
+                if (inDST()) {
+                        if (tm.Hour == 0) {
+                                tm.Hour = 23;
+                                tm.Day--; // Not guaranteed to work; don't care right now
+                        } else {
+                                tm.Hour--;
+                        }
+                }
+        }
+        if (datelen >= 2) GETDD(tm.Minute);
 #undef GETDD
 
-	if (datelen != 0) {
-		Serial.println(F("? ccyymmddHHMM.SS"));
-		Serial.println(str);
-		Serial.println(datelen);
-		Serial.println(dotpos);
-		Serial.println(str.length());
-		return;
-	}
-	RTC.write(tm);
+        if (datelen != 0) {
+                Serial.println(F("? ccyymmddHHMM.SS"));
+                Serial.println(str);
+                Serial.println(datelen);
+                Serial.println(dotpos);
+                Serial.println(str.length());
+                return;
+        }
+        RTC.write(tm);
 }
 
 void
 xmitTime(char hrTens, char hrOnes, char minTens, char minOnes,
          char secTens, char secOnes, bool colon, bool pm)
 {
-	if (!debug)
-		return;
-	Serial.write(hrTens);
-	Serial.write(hrOnes);
-	Serial.write(colon ? ':' : ' ');
-	Serial.write(minTens);
-	Serial.write(minOnes);
-	Serial.println(pm ? F(" PM") : F(" AM"));
+        if (!debug)
+                return;
+        Serial.write(hrTens);
+        Serial.write(hrOnes);
+        Serial.write(colon ? ':' : ' ');
+        Serial.write(minTens);
+        Serial.write(minOnes);
+        Serial.println(pm ? F(" PM") : F(" AM"));
 }
 
 #define SEG_A 0x02
@@ -195,16 +195,16 @@ xmitTime(char hrTens, char hrOnes, char minTens, char minOnes,
 #define SEG_DP 0x80
 static const unsigned char display_seg_lut[10] =
 {
-	/*0*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F,
-	/*1*/ SEG_B | SEG_C,
-	/*2*/ SEG_A | SEG_B | SEG_D | SEG_E | SEG_G,
-	/*3*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_G,
-	/*4*/ SEG_B | SEG_C | SEG_F | SEG_G,
-	/*5*/ SEG_A | SEG_C | SEG_D | SEG_F | SEG_G,
-	/*6*/ SEG_A | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G,
-	/*7*/ SEG_A | SEG_B | SEG_C,
-	/*8*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G,
-	/*9*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_F | SEG_G
+        /*0*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F,
+        /*1*/ SEG_B | SEG_C,
+        /*2*/ SEG_A | SEG_B | SEG_D | SEG_E | SEG_G,
+        /*3*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_G,
+        /*4*/ SEG_B | SEG_C | SEG_F | SEG_G,
+        /*5*/ SEG_A | SEG_C | SEG_D | SEG_F | SEG_G,
+        /*6*/ SEG_A | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G,
+        /*7*/ SEG_A | SEG_B | SEG_C,
+        /*8*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G,
+        /*9*/ SEG_A | SEG_B | SEG_C | SEG_D | SEG_F | SEG_G
 };
 
 // I hooked up the segments wrong, apparently, so I do the digit conversion
@@ -212,198 +212,198 @@ static const unsigned char display_seg_lut[10] =
 void
 lutSetChar(int controller, int position, unsigned char value, bool dp)
 {
-	unsigned char display;
-	switch (value) {
-	case ' ':
-		value = 0; break;
-	case '0'...'9':
-		value = display_seg_lut[value - '0']; break;
-	case 0 ... 9:
-		value = display_seg_lut[value]; break;
-	}
-	if (dp)
-		value |= SEG_DP;
-	lcl.setRow(controller, position, value);
+        unsigned char display;
+        switch (value) {
+        case ' ':
+                value = 0; break;
+        case '0'...'9':
+                value = display_seg_lut[value - '0']; break;
+        case 0 ... 9:
+                value = display_seg_lut[value]; break;
+        }
+        if (dp)
+                value |= SEG_DP;
+        lcl.setRow(controller, position, value);
 }
 
 void
 displayTime(char hrTens, char hrOnes, char minTens, char minOnes,
-		    char secTens, char secOnes, bool colon, bool pm)
+                    char secTens, char secOnes, bool colon, bool pm)
 {
 #if TESTPAT_EIGHTS
-	int i;
-	for (i = 0; i < 4; i++) {
-		lutSetChar(0, i, colon ? '8' : ' ', colon);
-	}
+        int i;
+        for (i = 0; i < 4; i++) {
+                lutSetChar(0, i, colon ? '8' : ' ', colon);
+        }
 #elif TESTPAT_DIGITS
-	for (i = 0; i < 4; i++) {
-		lutSetChar(0, i, secOnes, colon);
-	}
+        for (i = 0; i < 4; i++) {
+                lutSetChar(0, i, secOnes, colon);
+        }
 #else
-	lutSetChar(0, 0, hrTens, 0);
-	lutSetChar(0, 1, hrOnes, colon);
-	lutSetChar(0, 2, minTens, colon);
-	lutSetChar(0, 3, minOnes, pm);
+        lutSetChar(0, 0, hrTens, 0);
+        lutSetChar(0, 1, hrOnes, colon);
+        lutSetChar(0, 2, minTens, colon);
+        lutSetChar(0, 3, minOnes, pm);
 #endif
 }
 
 void
 showTime(char hrTens, char hrOnes, char minTens, char minOnes,
-		 char secTens, char secOnes, bool colon, bool pm)
+                 char secTens, char secOnes, bool colon, bool pm)
 {
-	xmitTime(hrTens, hrOnes, minTens, minOnes, secTens, secOnes, colon, pm);
-	displayTime(hrTens, hrOnes, minTens, minOnes, secTens, secOnes, colon, pm);
+        xmitTime(hrTens, hrOnes, minTens, minOnes, secTens, secOnes, colon, pm);
+        displayTime(hrTens, hrOnes, minTens, minOnes, secTens, secOnes, colon, pm);
 }
 
 void
 handleSerialInput()
 {
-	while (1) {
-		switch (Serial.read())
-		{
-			case -1:
-				return;
-			case 'T':
-				read_and_set_time(Serial.readStringUntil('\r'));
-				break;
-			case 'D':
-				debug = true;
-				EEPROM.write(DEBUG_ADDR, 1);
-				Serial.readStringUntil('\r');
-				break;
-			case 'd':
-				debug = false;
-				EEPROM.write(DEBUG_ADDR, 0);
-				digitalWrite(LED_BUILTIN, LOW);
-				Serial.readStringUntil('\r');
-				break;
-			case 'l':
-				{
-					unsigned char loopNum = Serial.read() - '0';
-					if (loopNum > MAX_LOOPNUM) {
-						Serial.println('?');
-						break;
-					}
-					innerLoop = innerLoops[loopNum];
-					EEPROM.write(LOOP_ADDR, loopNum);
-					Serial.readStringUntil('\r');
-					break;
-				}
-			case '\r':
-			case '\n':
-				Serial.println('?');
-				break;
-			case '?':
-				Serial.println(F("Debug: D (on) or d (off)\r\n"
-								 "Set: T[[[[[cc]yy]mm]dd]HH]MM[.ss]"));
-				break;
-			default:
-				break;
-		}
-	}
+        while (1) {
+                switch (Serial.read())
+                {
+                        case -1:
+                                return;
+                        case 'T':
+                                read_and_set_time(Serial.readStringUntil('\r'));
+                                break;
+                        case 'D':
+                                debug = true;
+                                EEPROM.write(DEBUG_ADDR, 1);
+                                Serial.readStringUntil('\r');
+                                break;
+                        case 'd':
+                                debug = false;
+                                EEPROM.write(DEBUG_ADDR, 0);
+                                digitalWrite(LED_BUILTIN, LOW);
+                                Serial.readStringUntil('\r');
+                                break;
+                        case 'l':
+                                {
+                                        unsigned char loopNum = Serial.read() - '0';
+                                        if (loopNum > MAX_LOOPNUM) {
+                                                Serial.println('?');
+                                                break;
+                                        }
+                                        innerLoop = innerLoops[loopNum];
+                                        EEPROM.write(LOOP_ADDR, loopNum);
+                                        Serial.readStringUntil('\r');
+                                        break;
+                                }
+                        case '\r':
+                        case '\n':
+                                Serial.println('?');
+                                break;
+                        case '?':
+                                Serial.println(F("Debug: D (on) or d (off)\r\n"
+                                                                 "Set: T[[[[[cc]yy]mm]dd]HH]MM[.ss]"));
+                                break;
+                        default:
+                                break;
+                }
+        }
 }
 
 void
 normalInnerLoop()
 {
-	tmElements_t tm;
-	RTC.read(tm);
-	static int lastColon = -1;
-	int colon = tm.Second % 2 == 0 ? 1 : 0;
-	if (colon != lastColon)
-	{
-		lastColon = colon;
+        tmElements_t tm;
+        RTC.read(tm);
+        static int lastColon = -1;
+        int colon = tm.Second % 2 == 0 ? 1 : 0;
+        if (colon != lastColon)
+        {
+                lastColon = colon;
 
-		int dstHour = tm.Hour + (inDST() ? 1 : 0);
-		int displayHour = dstHour % 12;
-		if (displayHour == 0)
-		{
-			displayHour = 12;
-		}
-		showTime(displayHour < 10 ? ' ' : '1', displayHour % 10 + '0',
-		         tm.Minute / 10 + '0', tm.Minute % 10 + '0',
-		         tm.Second / 10 + '0', tm.Second % 10 + '0',
-		         colon, dstHour >= 12);
-	}
-	
-	// Loop more quickly during the fade up.
-	static int last_intensity = -1;
-	if (last_intensity != FADE_ON_MAX)
-		delay(FADE_ON_TIME / (FADE_ON_MAX * 4));
-	else
-		delay(LOOP_TIME);
-	
-	if (last_intensity != FADE_ON_MAX)
-	{
-		int intensity = millis() * FADE_ON_MAX / FADE_ON_TIME;
-		if (intensity > FADE_ON_MAX)
-			intensity = FADE_ON_MAX;
-		if (intensity != last_intensity)
-		{
-			last_intensity = intensity;
-			lcl.setIntensity(0, intensity);
-			if (debug) {
-				Serial.print(F("* "));
-				Serial.println(intensity);
-			}
-		}
-	}
+                int dstHour = tm.Hour + (inDST() ? 1 : 0);
+                int displayHour = dstHour % 12;
+                if (displayHour == 0)
+                {
+                        displayHour = 12;
+                }
+                showTime(displayHour < 10 ? ' ' : '1', displayHour % 10 + '0',
+                         tm.Minute / 10 + '0', tm.Minute % 10 + '0',
+                         tm.Second / 10 + '0', tm.Second % 10 + '0',
+                         colon, dstHour >= 12);
+        }
+        
+        // Loop more quickly during the fade up.
+        static int last_intensity = -1;
+        if (last_intensity != FADE_ON_MAX)
+                delay(FADE_ON_TIME / (FADE_ON_MAX * 4));
+        else
+                delay(LOOP_TIME);
+        
+        if (last_intensity != FADE_ON_MAX)
+        {
+                int intensity = millis() * FADE_ON_MAX / FADE_ON_TIME;
+                if (intensity > FADE_ON_MAX)
+                        intensity = FADE_ON_MAX;
+                if (intensity != last_intensity)
+                {
+                        last_intensity = intensity;
+                        lcl.setIntensity(0, intensity);
+                        if (debug) {
+                                Serial.print(F("* "));
+                                Serial.println(intensity);
+                        }
+                }
+        }
 
-	return;
+        return;
 
 #if 0
-	// An earlier draft of this code landed here if the read failed.  It
-	// would print 0s if the chip was missing, and flash 12s if the clock
-	// wasn't running (CH, register 0 bit 7; off from the factory).
-	// But, detecting that requires a newer version of the DS1307RTC library
-	// than codebender currently has installed.
-	if (!RTC.chipPresent()) {
-		Serial.println(F("00:00"));
-		delay(10000);
-		return;
-	}
-	if (colon)
-		Serial.println(F("12:00"));
-	else
-		Serial.println("");
-	colon = !colon;
-	delay(1000);
-	return;
+        // An earlier draft of this code landed here if the read failed.  It
+        // would print 0s if the chip was missing, and flash 12s if the clock
+        // wasn't running (CH, register 0 bit 7; off from the factory).
+        // But, detecting that requires a newer version of the DS1307RTC library
+        // than codebender currently has installed.
+        if (!RTC.chipPresent()) {
+                Serial.println(F("00:00"));
+                delay(10000);
+                return;
+        }
+        if (colon)
+                Serial.println(F("12:00"));
+        else
+                Serial.println("");
+        colon = !colon;
+        delay(1000);
+        return;
 #endif
 }
 
 void
 burnTestInnerLoop()
 {
-	lcl.setIntensity(0, 15);
-	for (int i = 0; i < 8; i++) {
-		lcl.setRow(0, 0, 0x01 << i);
-		lcl.setRow(0, 1, 0x01 << i);
-		lcl.setRow(0, 2, 0x01 << i);
-		lcl.setRow(0, 3, 0x01 << i);
-		delay(250);
-	}
+        lcl.setIntensity(0, 15);
+        for (int i = 0; i < 8; i++) {
+                lcl.setRow(0, 0, 0x01 << i);
+                lcl.setRow(0, 1, 0x01 << i);
+                lcl.setRow(0, 2, 0x01 << i);
+                lcl.setRow(0, 3, 0x01 << i);
+                delay(250);
+        }
 }
 
 void
 eightsInnerLoop()
 {
-	lcl.setIntensity(0, 15);
-	lcl.setRow(0, 0, 0xFF);
-	lcl.setRow(0, 1, 0xFF);
-	lcl.setRow(0, 2, 0xFF);
-	lcl.setRow(0, 3, 0xFF);
-	delay(250);
+        lcl.setIntensity(0, 15);
+        lcl.setRow(0, 0, 0xFF);
+        lcl.setRow(0, 1, 0xFF);
+        lcl.setRow(0, 2, 0xFF);
+        lcl.setRow(0, 3, 0xFF);
+        delay(250);
 }
 
 void
 loop()
 {
-	static bool status;
-	if (debug) {
-		digitalWrite(LED_BUILTIN, status ? HIGH : LOW);
-		status = !status;
-	}
-	handleSerialInput();
-	innerLoop();
+        static bool status;
+        if (debug) {
+                digitalWrite(LED_BUILTIN, status ? HIGH : LOW);
+                status = !status;
+        }
+        handleSerialInput();
+        innerLoop();
 }
